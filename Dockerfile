@@ -1,15 +1,22 @@
-ARG IMAGE_VARIANT=slim-buster
-ARG OPENJDK_VERSION=8
-ARG PYTHON_VERSION=3.9.8
+FROM apache/airflow:2.7.3
+USER root
 
-FROM python:${PYTHON_VERSION}-${IMAGE_VARIANT} AS py3
-FROM openjdk:${OPENJDK_VERSION}-${IMAGE_VARIANT}
+RUN python3 --version
 
-COPY --from=py3 / /
+# Install OpenJDK 11 (for PySpark)
+RUN apt update && \
+    apt-get install -y openjdk-11-jdk && \
+    apt-get clean;
 
-ARG PYSPARK_VERSION=3.2.0
-RUN pip --no-cache-dir install pyspark==${PYSPARK_VERSION}
+# Install Python
+RUN \
+    apt-get update && \
+    apt-get install -y python3 python3-dev python3-pip python3-virtualenv && \
+    apt-get clean;
 
-COPY . .
-
-CMD python main.py
+# Install Python dependencies (including PySpark)
+USER airflow
+COPY requirements.txt /requirements.txt
+RUN \
+    pip install --user --upgrade pip && \
+    pip install -r /requirements.txt
