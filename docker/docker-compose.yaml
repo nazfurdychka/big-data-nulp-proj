@@ -50,7 +50,7 @@ x-airflow-common:
   # In order to add custom dependencies or upgrade provider packages you can use your extended image.
   # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
   # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
-  image: ${AIRFLOW_IMAGE_NAME:-extended_airflow:latest}
+  image: ${AIRFLOW_IMAGE_NAME:-DEFAULT_AIRFLOW_IMAGE_NAME}
 #  build: .
   environment:
     &airflow-common-env
@@ -73,10 +73,10 @@ x-airflow-common:
     # for other purpose (development, test and especially production usage) build/extend Airflow image.
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
   volumes:
-    - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
-    - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
-    - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
-    - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
+    - ../dags:/opt/airflow/dags
+    - ../logs:/opt/airflow/logs
+    - ../spark_apps:/opt/spark_apps
+    - ../data:/opt/data
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -84,6 +84,16 @@ x-airflow-common:
       condition: service_healthy
     postgres:
       condition: service_healthy
+
+x-spark-common:
+  &spark-common
+  image: spark-image
+  volumes:
+    - ../data:/opt/data
+    - ../spark_apps:/opt/spark_apps
+    - spark-logs:/opt/spark/spark-events
+  env_file:
+    - .env
 
 services:
   postgres:
@@ -246,8 +256,8 @@ services:
           echo "   https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#before-you-begin"
           echo
         fi
-        mkdir -p /sources/logs /sources/dags /sources/plugins
-        chown -R "${AIRFLOW_UID}:0" /sources/{logs,dags,plugins}
+        mkdir -p /sources/logs /sources/dags
+        chown -R "${AIRFLOW_UID}:0" /sources/{logs,dags}
         exec /entrypoint airflow version
     # yamllint enable rule:line-length
     environment:
@@ -259,7 +269,7 @@ services:
       _PIP_ADDITIONAL_REQUIREMENTS: ''
     user: "0:0"
     volumes:
-      - ${AIRFLOW_PROJ_DIR:-.}:/sources
+      - ..:/sources
 
   airflow-cli:
     <<: *airflow-common
@@ -274,27 +284,53 @@ services:
       - -c
       - airflow
 
-  # You can enable flower by adding "--profile flower" option e.g. docker-compose --profile flower up
-  # or by explicitly targeted on the command line e.g. docker-compose up flower.
-  # See: https://docs.docker.com/compose/profiles/
-  flower:
-    <<: *airflow-common
-    command: celery flower
-    profiles:
-      - flower
-    ports:
-      - "5555:5555"
+  # Next services are related to the Spark cluster
+  spark-master:
+    <<: *spark-common
+    container_name: spark-master
+    build:
+      context: spark/.
+      target: pyspark
+    entrypoint: [ './entrypoint.sh', 'master']
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    restart: always
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    ports:
+      - '4040:4040'
+      - '9090:8080'
+      - '7077:7077'
+
+  spark-history-server:
+    <<: *spark-common
+    container_name: spark-history
+    entrypoint: [ './entrypoint.sh', 'history' ]
     depends_on:
-      <<: *airflow-common-depends-on
-      airflow-init:
-        condition: service_completed_successfully
+      - spark-master
+    volumes:
+      - spark-logs:/opt/spark/spark-events
+    ports:
+      - '18080:18080'
+
+  spark-worker-1:
+    <<: *spark-common
+    container_name: spark-worker-1
+    entrypoint: [ './entrypoint.sh', 'worker', '7078']
+    depends_on:
+      - spark-master
+    ports:
+      - '7078:7078'
+
+  spark-worker-2:
+    <<: *spark-common
+    container_name: spark-worker-2
+    entrypoint: [ './entrypoint.sh', 'worker', '7079']
+    depends_on:
+      - spark-master
+    ports:
+      - '7079:7079'
 
 volumes:
   postgres-db-volume:
+  spark-logs:
