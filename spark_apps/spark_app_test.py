@@ -1,46 +1,27 @@
-import os
-
 from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType
 
 # Create a Spark session
-spark = SparkSession.builder.appName("test").getOrCreate()
+spark = SparkSession.builder.appName("GenerateAndWriteDataFrame").getOrCreate()
 
-# Specify the path to the TSV file
-# tsv_file_path = "/opt/spark/data/data_example.tsv"
-tsv_file_path = '/opt/data/data_example.tsv'
-print(f'File path: {tsv_file_path}')
+# Define the schema for the DataFrame
+schema = StructType([
+    StructField("id", IntegerType(), True),
+    StructField("name", StringType(), True),
+    StructField("value", IntegerType(), True)
+])
 
-# Define the schema if needed
-# schema = "col1 INT, col2 STRING, col3 DOUBLE"
+# Generate a large DataFrame with random data
+num_rows = 1000000  # Adjust the number of rows as needed
+data = [(i, f"Name{i}", i % 100) for i in range(num_rows)]
+df = spark.createDataFrame(data, schema=schema)
 
-# Read the TSV file into a DataFrame
-# If you have a header in your TSV file, you can set header option to True
-print('Reading dataframe')
-df = spark.read.option("header","true") \
-               .option("sep", "\t") \
-               .option("multiLine", "true") \
-               .option("quote","\"") \
-               .option("escape","\"") \
-               .option("ignoreTrailingWhiteSpace", True).csv(tsv_file_path)
-print('Read successfully!')
+# Show a sample of the DataFrame
+df.show(5)
 
-# If you need to specify a custom schema, you can do so using the schema option
-# df = spark.read.option("header", "true").option("delimiter", "\t").schema(schema).csv(tsv_file_path)
-
-# Drop a column
-print('Dropping column')
-column_to_drop = 'a'
-df_transformed = df.drop(column_to_drop)
-print('Dropped')
-
-# Save transformed data
-print('Saving result')
-output_tsv_path = "/opt/data/transformed"
-df_transformed.write.option('header', True).csv(output_tsv_path)
-print('Saved')
-
-# Show the DataFrame
-# df.show()
+# Write the DataFrame to a Parquet file (you can choose a different format if needed)
+output_path = "/opt/data/test_data"
+df.write.mode("overwrite").parquet(output_path)
 
 # Stop the Spark session
 spark.stop()
