@@ -1,5 +1,7 @@
 # big-data-nulp-proj
 
+## README IS NOT VALID, WILL BE UPDATED SOON (OR NOT...)
+
 ## Installation
 _TBD_: add section about repo initialization and cloning
 
