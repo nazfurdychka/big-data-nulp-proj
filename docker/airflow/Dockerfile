@@ -1,4 +1,4 @@
-FROM ${DEFAULT_AIRFLOW_IMAGE_NAME}
+FROM apache/airflow:2.7.3
 USER root
 
 # Install tools required by the OS
@@ -16,8 +16,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Setup the directories for Spark and Hadoop installations
-ENV SPARK_HOME=${SPARK_HOME:-"/opt/spark"}
-ENV HADOOP_HOME=${HADOOP_HOME:-"/opt/hadoop"}
+ENV SPARK_HOME="/opt/spark"
+ENV HADOOP_HOME="/opt/hadoop"
 
 RUN mkdir -p ${HADOOP_HOME} && mkdir -p ${SPARK_HOME}
 WORKDIR ${SPARK_HOME}
@@ -27,6 +27,9 @@ ARG SPARK_VERSION=3.4.1
 RUN curl https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz -o spark-${SPARK_VERSION}-bin-hadoop3.tgz \
  && tar xvzf spark-${SPARK_VERSION}-bin-hadoop3.tgz --directory /opt/spark --strip-components 1 \
  && rm -rf spark-${SPARK_VERSION}-bin-hadoop3.tgz
+
+# Update Spark with default config
+COPY ./spark-defaults.conf "$SPARK_HOME/conf"
 
 # Install Python dependencies
 USER airflow
