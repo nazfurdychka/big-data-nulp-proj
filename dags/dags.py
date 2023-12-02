@@ -51,7 +51,7 @@ with DAG(
 
     end_operator = DummyOperator(task_id='end')
 
-    start_operator >> spark_operator_1 >> end_operator
+    start_operator >> spark_operator_1 >> spark_operator_2 >> spark_operator_3 >> spark_operator_4 >> spark_operator_5 >> spark_operator_6 >> end_operator
 
 with DAG(
         'business-questions-2',
