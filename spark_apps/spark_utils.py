@@ -4,6 +4,7 @@ import os
 
 INPUT_DATA_PARENT_DIR = '/opt/data'
 OUTPUT_DATA_PARENT_DIR = '/opt/data/output'
+NA_VALUE = "\\N"
 
 
 def create_spark_session(app_name) -> SparkSession:
