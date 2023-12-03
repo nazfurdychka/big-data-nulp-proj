@@ -1,7 +1,7 @@
 import os
 
 from airflow import DAG
-from airflow.operators.dummy import DummyOperator
+from airflow.operators.empty import EmptyOperator
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 from datetime import datetime
 
@@ -21,7 +21,7 @@ with DAG(
         description=f'Owned by Nazar Furdychka, questions can be accessed by : {BUSINESS_QUESTIONS_LINK}',
         schedule_interval=None,
 ) as dag:
-    start_operator = DummyOperator(task_id='start')
+    start_operator = EmptyOperator(task_id='start')
     spark_jobs_dir_path = os.path.join(SPARK_JOBS_PARENT_DIR_PATH, 'questions_set_1')
 
     spark_operator_1 = SparkSubmitOperator(
@@ -49,7 +49,7 @@ with DAG(
         application=os.path.join(spark_jobs_dir_path, 'title_type_with_most_languages.py'),
         conn_id=DEFAULT_CONNECTION_ID)
 
-    end_operator = DummyOperator(task_id='end')
+    end_operator = EmptyOperator(task_id='end')
 
     start_operator >> spark_operator_1 >> spark_operator_2 >> spark_operator_3 >> spark_operator_4 >> spark_operator_5 >> spark_operator_6 >> end_operator
 
@@ -60,13 +60,13 @@ with DAG(
         description=f'Owned by ______, questions can be accessed by : {BUSINESS_QUESTIONS_LINK}',
         schedule_interval=None,
 ) as dag:
-    start_operator = DummyOperator(task_id='start')
+    start_operator = EmptyOperator(task_id='start')
     spark_operator_1 = SparkSubmitOperator(
         task_id='spark-template',
         application=os.path.join(SPARK_JOBS_PARENT_DIR_PATH, 'spark_job_template.py'),
         conn_id=DEFAULT_CONNECTION_ID,
     )
 
-    end_operator = DummyOperator(task_id='end')
+    end_operator = EmptyOperator(task_id='end')
 
     start_operator >> spark_operator_1 >> end_operator
