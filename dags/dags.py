@@ -91,3 +91,29 @@ with DAG(
     end_operator = EmptyOperator(task_id='end')
 
     start_operator >> spark_operator_1 >> spark_operator_2 >> spark_operator_3 >> spark_operator_4 >> spark_operator_5 >> spark_operator_6 >> end_operator
+
+with DAG(
+        'business-questions-5',
+        default_args=default_args,
+        start_date=datetime(2023, 1, 1),
+        description=f'Owned by Ivan Shkvir, questions can be accessed by : {BUSINESS_QUESTIONS_LINK}',
+        schedule_interval=None,
+) as dag4:
+    start_operator = EmptyOperator(task_id='start')
+    spark_jobs_dir_path = os.path.join(SPARK_JOBS_PARENT_DIR_PATH, 'question_set_5')
+
+    spark_operator_1 = SparkSubmitOperator(
+        task_id='correlation-between-duration-and-rating',
+        application=os.path.join(spark_jobs_dir_path, 'correlation_between_duration_and_rating.py'),
+        conn_id=DEFAULT_CONNECTION_ID
+    )
+
+    spark_operator_2 = SparkSubmitOperator(
+        task_id='most-popular-languages-by-region',
+        application=os.path.join(spark_jobs_dir_path, 'most_popular_languages_by_regions.py'),
+        conn_id=DEFAULT_CONNECTION_ID
+    )
+
+    end_operator = EmptyOperator(task_id='end')
+
+    start_operator >> [spark_operator_1, spark_operator_2] >> end_operator
