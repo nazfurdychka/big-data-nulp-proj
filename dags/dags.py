@@ -93,6 +93,50 @@ with DAG(
     start_operator >> spark_operator_1 >> spark_operator_2 >> spark_operator_3 >> spark_operator_4 >> spark_operator_5 >> spark_operator_6 >> end_operator
 
 with DAG(
+        'business-questions-3',
+        default_args=default_args,
+        start_date=datetime(2023, 1, 1),
+        description=f'Owned by Oleksandr Patsuryn, questions can be accessed by : {BUSINESS_QUESTIONS_LINK}',
+        schedule_interval=None,
+) as dag:
+    start_operator = EmptyOperator(task_id='start')
+    spark_jobs_dir_path = os.path.join(SPARK_JOBS_PARENT_DIR_PATH, 'questions_set_3')
+
+    spark_operator_1 = SparkSubmitOperator(
+        task_id='movies_highest_average_rating_task',
+        application=os.path.join(spark_jobs_dir_path, 'movies_highest_average_rating.py'),
+        conn_id=DEFAULT_CONNECTION_ID)
+
+    spark_operator_2 = SparkSubmitOperator(
+        task_id='genres_with_highest_released_movie_number_task',
+        application=os.path.join(spark_jobs_dir_path, 'genres_with_highest_released_movie_number.py'),
+        conn_id=DEFAULT_CONNECTION_ID)
+
+    spark_operator_3 = SparkSubmitOperator(
+        task_id='top_actors_of_tv_series_task',
+        application=os.path.join(spark_jobs_dir_path, 'top_actors_of_tv_series.py'),
+        conn_id=DEFAULT_CONNECTION_ID)
+
+    spark_operator_4 = SparkSubmitOperator(
+        task_id='companies_with_multilanguage_produced_movies_task',
+        application=os.path.join(spark_jobs_dir_path, 'companies_with_multilanguage_produced_movies.py'),
+        conn_id=DEFAULT_CONNECTION_ID)
+
+    spark_operator_5 = SparkSubmitOperator(
+        task_id='top_years_of_blockbusters_task',
+        application=os.path.join(spark_jobs_dir_path, 'top_years_of_blockbusters.py'),
+        conn_id=DEFAULT_CONNECTION_ID)
+
+    spark_operator_6 = SparkSubmitOperator(
+        task_id='most_popular_actor_actress_pair_task',
+        application=os.path.join(spark_jobs_dir_path, 'most_popular_actor_actress_pair.py'),
+        conn_id=DEFAULT_CONNECTION_ID)
+
+    end_operator = EmptyOperator(task_id='end')
+
+    start_operator >> spark_operator_1 >> spark_operator_2 >> spark_operator_3 >> spark_operator_4 >> spark_operator_5 >> spark_operator_6 >> end_operator
+
+with DAG(
         'business-questions-4',
         default_args=default_args,
         start_date=datetime(2023, 1, 1),
