@@ -187,3 +187,60 @@ with DAG(
     start_operator >> spark_operator_1 >> spark_operator_2 >> spark_operator_3 >> \
     spark_operator_4 >> spark_operator_5 >> spark_operator_6 >> end_operator
 
+
+with DAG(
+        'business-questions-5',
+        default_args=default_args,
+        start_date=datetime(2023, 1, 1),
+        description=f'Owned by Ivan Shkvir, questions can be accessed by : {BUSINESS_QUESTIONS_LINK}',
+        schedule_interval=None,
+) as dag5:
+    start_operator = EmptyOperator(task_id='start')
+    spark_jobs_dir_path = os.path.join(SPARK_JOBS_PARENT_DIR_PATH, 'questions_set_5')
+
+    spark_operator_1 = SparkSubmitOperator(
+        task_id='correlation-between-duration-and-rating',
+        application=os.path.join(spark_jobs_dir_path, 'correlation_between_duration_and_rating.py'),
+        conn_id=DEFAULT_CONNECTION_ID,
+        total_executor_cores=4
+    )
+
+    spark_operator_2 = SparkSubmitOperator(
+        task_id='most-popular-languages-by-region',
+        application=os.path.join(spark_jobs_dir_path, 'most_popular_languages_by_regions.py'),
+        conn_id=DEFAULT_CONNECTION_ID,
+        total_executor_cores=4
+    )
+
+    spark_operator_3 = SparkSubmitOperator(
+        task_id='most-successful-directors-and-writers',
+        application=os.path.join(spark_jobs_dir_path, 'most_successful_directors_and_writers.py'),
+        conn_id=DEFAULT_CONNECTION_ID,
+        total_executor_cores=4
+    )
+
+    spark_operator_4 = SparkSubmitOperator(
+        task_id='most-successful-genre-combinations',
+        application=os.path.join(spark_jobs_dir_path, 'most_successful_genre_combinations.py'),
+        conn_id=DEFAULT_CONNECTION_ID,
+        total_executor_cores=4
+    )
+
+    spark_operator_5 = SparkSubmitOperator(
+        task_id='most-popular-genres-by-region',
+        application=os.path.join(spark_jobs_dir_path, 'most_popular_genres_by_region.py'),
+        conn_id=DEFAULT_CONNECTION_ID,
+        total_executor_cores=4
+    )
+
+    spark_operator_6 = SparkSubmitOperator(
+        task_id='most-successful-generation-of-actors',
+        application=os.path.join(spark_jobs_dir_path, 'most_successful_generation_of_actors.py'),
+        conn_id=DEFAULT_CONNECTION_ID,
+        total_executor_cores=4
+    )
+
+    end_operator = EmptyOperator(task_id='end')
+
+    start_operator >> [spark_operator_1, spark_operator_2, spark_operator_3,
+                       spark_operator_4, spark_operator_5, spark_operator_6] >> end_operator
