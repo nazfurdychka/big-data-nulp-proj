@@ -135,3 +135,55 @@ with DAG(
     end_operator = EmptyOperator(task_id='end')
 
     start_operator >> spark_operator_1 >> spark_operator_2 >> spark_operator_3 >> spark_operator_4 >> spark_operator_5 >> spark_operator_6 >> end_operator
+
+with DAG(
+        'business-questions-4',
+        default_args=default_args,
+        start_date=datetime(2023, 1, 1),
+        description=f'Owned by Nazar Kohut, questions can be accessed by : {BUSINESS_QUESTIONS_LINK}',
+        schedule_interval=None,
+) as dag:
+    start_operator = EmptyOperator(task_id='start')
+    spark_jobs_dir_path = os.path.join(SPARK_JOBS_PARENT_DIR_PATH, 'questions_set_4')
+
+    spark_operator_1 = SparkSubmitOperator(
+        task_id='unique_genres',
+        application=os.path.join(spark_jobs_dir_path, 'unique_genres.py'),
+        conn_id=DEFAULT_CONNECTION_ID,
+    )
+
+    spark_operator_2 = SparkSubmitOperator(
+        task_id='top_5_rated_movies_by_genres_task',
+        application=os.path.join(spark_jobs_dir_path, 'top_5_movies_by_genres.py'),
+        conn_id=DEFAULT_CONNECTION_ID,
+    )
+
+    spark_operator_3 = SparkSubmitOperator(
+        task_id='top_3_genres_in_years_task',
+        application=os.path.join(spark_jobs_dir_path, 'top_3_genres_in_years.py'),
+        conn_id=DEFAULT_CONNECTION_ID,
+    )
+
+    spark_operator_4 = SparkSubmitOperator(
+        task_id='top_3_genres_in_years_by_rating_task',
+        application=os.path.join(spark_jobs_dir_path, 'top_3_genres_in_years_by_rating.py'),
+        conn_id=DEFAULT_CONNECTION_ID,
+    )
+
+    spark_operator_5 = SparkSubmitOperator(
+        task_id='number_of_adult_movies_in_years_task',
+        application=os.path.join(spark_jobs_dir_path, 'number_of_adult_movies_in_years.py'),
+        conn_id=DEFAULT_CONNECTION_ID,
+    )
+
+    spark_operator_6 = SparkSubmitOperator(
+        task_id='top_20_most_voted_movies_for_top_3_genres_in_2023_task',
+        application=os.path.join(spark_jobs_dir_path, 'top_20_most_voted_movies_for_top_3_genres_in_2023.py'),
+        conn_id=DEFAULT_CONNECTION_ID,
+    )
+
+    end_operator = EmptyOperator(task_id='end')
+
+    start_operator >> spark_operator_1 >> spark_operator_2 >> spark_operator_3 >> \
+    spark_operator_4 >> spark_operator_5 >> spark_operator_6 >> end_operator
+
