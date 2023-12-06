@@ -1,6 +1,8 @@
 import os
 import sys
 
+from pyspark.sql import functions as F
+
 current_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
 parent_dir = os.path.dirname(current_dir)
 proj_dir = os.path.dirname(parent_dir)
@@ -20,7 +22,8 @@ def main():
     title_data = title_basics.join(title_ratings, "tconst")
 
     # Step 4: Filter out missing or null values
-    title_data = title_data.filter(title_data["runtimeMinutes"].isNotNull() & title_data["averageRating"].isNotNull())
+    title_data = title_data.filter((F.col("runtimeMinutes") != sp_utils.NA_VALUE) &
+                                   (F.col("averageRating").cast('string') != sp_utils.NA_VALUE))
 
     # Step 5: Convert columns to appropriate data types
     title_data = title_data.withColumn("runtimeMinutes", title_data["runtimeMinutes"].cast("int"))

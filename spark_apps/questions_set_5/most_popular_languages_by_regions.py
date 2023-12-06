@@ -13,7 +13,7 @@ import spark_apps.spark_utils as sp_utils
 
 def main():
     # Step 1: Initialize SparkSession
-    spark = sp_utils.create_spark_session("TitleRatingCorrelation")
+    spark = sp_utils.create_spark_session("LanguagesByRegion")
 
     # Step 2: Load the required datasets
     title_akas = sp_utils.read_data(spark, "title.akas.tsv")
@@ -24,7 +24,7 @@ def main():
 
     # Step 4: Filter out missing or null values for language and region
     filtered_data = joined_data.filter(
-        joined_data["language"].isNotNull() & joined_data["region"].isNotNull()
+        (F.col("language") != sp_utils.NA_VALUE) & (F.col("region") != sp_utils.NA_VALUE)
     )
 
     # Step 5: Group by region and language, count occurrences
@@ -33,6 +33,7 @@ def main():
     # Step 6: Find the most common language for each region
     window_spec = Window.partitionBy("region").orderBy(F.desc("title_count"))
     most_common_language = language_counts.withColumn("rank", F.rank().over(window_spec)).filter("rank == 1").drop("rank")
+    most_common_language = most_common_language.orderBy(F.desc('title_count'))
 
     # Step 7: Show the results
     most_common_language.show(truncate=False)
